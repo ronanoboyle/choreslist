@@ -1,0 +1,84 @@
+/*
+WHITE: #FEFEFE
+BLACK: #000000
+CHORE: 
+*/
+
+* {
+    box-sizing: border-box;
+}
+
+
+
+html, body {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+.container {
+    max-width: 380px;
+    margin: 0 auto;
+}
+
+h1 {
+    font-family: 'Concert One', cursive;
+    font-size: 40px;
+}
+
+p {
+   font-size: 18px; 
+}
+
+img {
+    margin-top: 12px;
+    width: 100%;
+    padding: 0 2px;
+}
+
+.chore-submission-container {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0;
+}
+
+.chore-input {
+    margin-top: 8px;
+    font-family: 'Inter', sans-serif;
+    border: none;
+    background: #EEEEEE;
+    padding: 10px 6px;
+    text-align: center;
+    font-size: 18px;
+    border-radius: 4px;
+    padding: 12px 18px;
+    flex-grow: 1;
+}
+
+button {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    padding: 14px 16px;
+    border-radius: 4px;
+    border: none;
+    margin-top: 8px;
+    margin-left: 8px;
+}
+
+.add-btn {
+   background: #FFCC68;
+
+}
+
+.clear-btn {
+    background: #FF9548;
+}
+
+.chore-btn {
+    margin: 10px 0 0;
+    background: #FBDF7C;
+    width: 100%;
+}
+
+
+
