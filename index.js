@@ -9,82 +9,70 @@ const messages = {
     choreDuplication: "Chore already included...",
     allDone: "All chores cleared!"
     }
+    
+// local storage constant
+const LOCAL_STORAGE_KEY = 'localUserChores'
 
 const choreInputEl = document.querySelector(".chore-input")
-const addBtn = document.querySelector(".add-btn")
-const clearBtn = document.querySelector(".clear-btn")
+const addBtnEl = document.querySelector(".add-btn")
+const clearBtnEl = document.querySelector(".clear-btn")
 const choresListEl = document.querySelector(".chores-list")
-const choresList = localStorage
 
+// populates list on each refresh if any items are in local storage
+populateChoresListEl()
 
-// adds new chore to the array
-function addChoreToArray(newChore) {
-    if (Object.values(choresList).length === 0) {
-        choresListValues = []
-    } 
-
-    if (!Object.values(choresList).includes(newChore)) {
-        choresList.setItem(setIndex(), newChore)
-        setValuesArray()
-        populateChoresListEl()
+addBtnEl.addEventListener("click", function() {
+    const localUserChores = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || []
+    const choreText = choreInputEl.value
+    if (localUserChores.includes(choreText)) {
+            createMessageEl(messages.choreDuplication)
+            choreInputEl.value = ""
     } else {
-        createMessageEl(messages.choreDuplication)
-        clearChoreInput()
-    }
-}
-
-function setIndex() {
-    let index = 1
-    if (Object.keys(choresList).length > 0) {
-        const lastIndex = Object.keys(choresList).sort(function(a, b) { return a - b })[Object.keys(choresList).length - 1]
-        index = Number(lastIndex) + 1
-    }
-    console.log(index)
-    return index
-}
-
-function setValuesArray() {
-    choresListValues = []
-    if (Object.keys(choresList).length > 0) {
-        const keysArray = Object.keys(choresList) ////////
-        for (let i = 0; i < keysArray.length; i++) {
-        const choreValue = choresList.getItem(keysArray[i])
-        choresListValues.push(choreValue)
+        if (choreText) {
+            addChoreToArray(choreText)
+        } else {
+            createMessageEl(messages.noText)
         }
     }
-}
+})
 
-// iterates over the array to populate the list - including the new chore
+clearBtnEl.addEventListener("click", function() {
+    if (!localStorage.localUserChores) {
+        createMessageEl(messages.noChores)
+    } else {
+        choresListEl.textContent = ""
+        createMessageEl(messages.allDone)
+        localStorage.clear()
+    }
+})
+
+// either creates (if none) or gets items from local storage to populate list
 function populateChoresListEl() {
-    if (Object.values(choresList)) {
-        clearChoresListEl() 
-        let arr = Object.keys(choresList).sort(function(a, b) { return a - b })
-        arr.forEach ( function(index) {
-            const nextChore = createChoreEl(choresList[index])
+    if (!localStorage.localUserChores) {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([]))
+    } else {
+        let localUserChores = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY))
+        choresListEl.textContent = ""
+        localUserChores.forEach( function(chore) {
+            const nextChore = createChoreEl(chore)
             choresListEl.insertBefore(nextChore, choresListEl.firstChild)
         })
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localUserChores))
     }
     setEventListeners()
 }
 
-// creates and returns the div el for the new chore
-function createChoreEl(chore) {
-    const div = document.createElement("div")
-    div.innerHTML = `
-                        <button class="chore-btn" id="${chore}">${chore}</button>
-                    `
-    clearChoreInput()
-    return div
-}
-
-// Removes entry of clicked chore from localstorage object and repopulates list.
-function deleteChore(ID) {
-    const choreElToDelete = document.getElementById(`${ID}`)
-    const choreToDelete = choreElToDelete.textContent
-    const keyToDelete = Object.keys(choresList).find(key => choresList[key] === choreToDelete)
-    choresList.removeItem(keyToDelete)
+// adds new chore to local storage by setting array with existing items
+function addChoreToArray(newChore) {
+    let localUserChores = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY))
+    if (localUserChores) {
+            localUserChores.push(newChore)
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localUserChores))
+        }
+    else {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([newChore]))
+    }
     populateChoresListEl()
-    playGif(choreElToDelete)
 }
 
 // creates message for reader depending on the issue.
@@ -95,9 +83,45 @@ function createMessageEl(message) {
                         <p class="clear-message">${message}</p>
                     `
     choresListEl.insertBefore(div, choresListEl.firstChild)
-    setTimeout(() => clearMessage(), 1500)
+    setTimeout(function() {
+        choresListEl.firstChild.textContent = ""
+        toggleButtons()
+    }, 1500)
 }
 
+// creates and returns the div el for the new chore
+function createChoreEl(chore) {
+    const div = document.createElement("div")
+    div.innerHTML = `
+                        <button class="chore-btn" id="${chore}">${chore}</button>
+                    `
+    choreInputEl.value = "";
+    return div
+}
+
+// adds event listeners to each of the chores so that they can be deleted
+function setEventListeners() {
+    const choreEls = document.querySelectorAll('.chore-btn')
+    const chorePressed = event => { 
+        deleteChore(event.target.id)
+        }
+    
+    for (let chore of choreEls) {
+    chore.addEventListener("click", chorePressed)
+    }
+}
+
+// Removes entry of clicked chore from localstorage object and repopulates list.
+function deleteChore(ID) {
+    let localUserChores = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY))
+    const choreElToDelete = document.getElementById(`${ID}`)
+    const choreToDelete = choreElToDelete.textContent
+    const indexToDelete = localUserChores.indexOf(choreToDelete)
+    localUserChores.splice(indexToDelete, 1)
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localUserChores))
+    populateChoresListEl()
+    playGif(choreElToDelete)
+}
 
 // creation and deletion of celebratory gifs
 function createGifEl(gif) {
@@ -107,17 +131,15 @@ function createGifEl(gif) {
                     `
     choresListEl.insertBefore(div, choresListEl.firstChild)
     toggleButtons()
-    setTimeout(() => deleteGif(), 3000)
-}
-
-function deleteGif() {
-    choresListEl.removeChild(choresListEl.firstElementChild)
-    toggleButtons()
+    setTimeout(function() {
+        choresListEl.removeChild(choresListEl.firstElementChild)
+        toggleButtons()
+    }, 3000)
 }
 
 // fetches random gif url to send create a gif from.
 // TODO: More efficient fetch so that not receiving so much data
-function playGif(choreEl) {
+function playGif() {
     fetch(`https://api.giphy.com/v1/gifs/search?q=${searchTerm}&api_key=${apiKey}`)
     .then(response => response.json())
     .then(data => {
@@ -142,53 +164,3 @@ function toggleButtons() {
         }
     })
 }
-
-function clearChoreInput() {
-    choreInputEl.value = ""
-}
-
-function clearChoresListEl() {
-    choresListEl.textContent = ""
-}
-
-function clearChoresList() {
-    localStorage.clear()
-}
-
-function clearMessage() {
-    choresListEl.firstChild.textContent = ""
-    toggleButtons()
-}
-
-// adds event listeners to each of the chores so that they can be deleted
-function setEventListeners() {
-    const choreEls = document.querySelectorAll('.chore-btn')
-    const chorePressed = event => { 
-        deleteChore(event.target.id)
-        }
-    
-    for (let chore of choreEls) {
-    chore.addEventListener("click", chorePressed)
-    }
-}
-
-addBtn.addEventListener("click", function() {
-    const choreText = choreInputEl.value
-    if (choreText) {
-        addChoreToArray(choreText)
-    } else {
-        createMessageEl(messages.noText)
-    }
-})
-
-clearBtn.addEventListener("click", function() {
-    if (Object.keys(choresList) < 1) {
-        createMessageEl(messages.noChores)
-    } else {
-        clearChoresListEl()
-        createMessageEl(messages.allDone)
-        clearChoresList()
-    }
-})
-
-populateChoresListEl()
